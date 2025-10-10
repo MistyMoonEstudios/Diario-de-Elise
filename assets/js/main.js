@@ -3,11 +3,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENTOS DO DOM ---
     const leftPage = document.getElementById('left-page');
     const rightPageContainer = document.getElementById('right-page-container');
-    let paginaTopo, paginaFundo; // Páginas da direita que alternam
+    let paginaTopo, paginaFundo;
+    let prevPageBtn; // NOVO: Referência para o botão de voltar
 
     // --- ESTADO DO JOGO ---
     let estadoAtual = { passagemId: 'prologo', subPagina: 0 };
     let isAnimating = false;
+    const historicoDeEstados = []; // NOVO: Array para guardar o histórico de navegação
+
+    /**
+     * NOVO: Atualiza o estado visual dos botões de navegação.
+     */
+    function atualizarEstadoBotoes() {
+        if (!prevPageBtn) {
+            prevPageBtn = document.getElementById('prev-page-btn');
+        }
+        prevPageBtn.disabled = historicoDeEstados.length === 0;
+    }
 
     /**
      * Renderiza o conteúdo de um estado na página da direita.
@@ -62,42 +74,39 @@ document.addEventListener('DOMContentLoaded', () => {
         const faceVerso = paginaTopo.querySelector('.face.verso');
         if (faceVerso) {
             faceVerso.innerHTML = '';
-            // Clona a estrutura da página esquerda para manter a formatação.
             for (const node of leftPage.children) {
                 faceVerso.appendChild(node.cloneNode(true));
             }
-
-            // --- A CORREÇÃO DEFINITIVA ESTÁ AQUI ---
-            // Encontra o título no clone...
             const tituloNoVerso = faceVerso.querySelector('.content h1');
-            // ...e o atualiza com o título da PRÓXIMA página.
             const tituloProximo = historia[proximoEstado.passagemId].titulo;
             if (tituloNoVerso) {
                 tituloNoVerso.textContent = tituloProximo;
             }
         }
-        
-        // Prepara a página de baixo com o conteúdo de texto da próxima página.
         renderizarPaginaDireita(paginaFundo, proximoEstado);
     }
 
     /**
      * Inicia a transição animada.
+     * MODIFICADO: Adicionado parâmetro 'salvarNoHistorico'.
      */
-    function iniciarTransicao(proximoEstado) {
+    function iniciarTransicao(proximoEstado, salvarNoHistorico = true) {
         if (isAnimating) return;
         isAnimating = true;
+
+        if (salvarNoHistorico) {
+            historicoDeEstados.push({ ...estadoAtual });
+        }
 
         prepararTransicao(proximoEstado);
         
         const onAnimationEnd = () => {
-            // Atualiza o título esquerdo só depois da animação.
             leftPage.querySelector('.content').innerHTML = `<h1>${historia[proximoEstado.passagemId].titulo}</h1>`;
 
             const paginaAntiga = paginaTopo;
-            paginaAntiga.classList.remove('virando', 'em-primeiro-plano');
+            paginaAntiga.classList.remove('virando');
+            rightPageContainer.classList.remove('em-primeiro-plano');
             
-            // Troca os papéis das páginas.
             paginaAntiga.classList.remove('pagina-topo');
             paginaAntiga.classList.add('pagina-fundo');
             
@@ -108,6 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
             atualizarReferenciasDOM();
             estadoAtual = proximoEstado;
             isAnimating = false;
+            atualizarEstadoBotoes(); // NOVO: Atualiza estado do botão
         };
         
         rightPageContainer.classList.add('em-primeiro-plano');
@@ -135,6 +145,18 @@ document.addEventListener('DOMContentLoaded', () => {
             iniciarTransicao({ passagemId: destinoId, subPagina: 0 });
         }
     }
+
+    /**
+     * NOVO: Função para voltar à página anterior.
+     */
+    function voltarPagina() {
+        if (isAnimating || historicoDeEstados.length === 0) {
+            return;
+        }
+        const estadoAnterior = historicoDeEstados.pop();
+        // O "false" impede que o ato de "voltar" seja salvo no histórico
+        iniciarTransicao(estadoAnterior, false);
+    }
     
     // --- INICIALIZAÇÃO DO JOGO ---
     function init() {
@@ -151,6 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 virarPagina();
             }
         });
+        
+        // NOVO: Adiciona listener para o botão de voltar
+        prevPageBtn = document.getElementById('prev-page-btn');
+        prevPageBtn.addEventListener('click', voltarPagina);
         
         // Listeners do Modal
         const optionsBtn = document.getElementById('options-btn');
@@ -170,18 +196,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         extrasBtn.addEventListener('click', () => {
             console.log("Botão Extras clicado!");
-            // Futuramente, abrirá o modal de extras aqui.
         });
 
         notasBtn.addEventListener('click', () => {
             console.log("Botão Notas clicado!");
-            // Futuramente, abrirá o modal de notas aqui.
         });
 
         conquistasBtn.addEventListener('click', () => {
             console.log("Botão Conquistas clicado!");
-            // Futuramente, abrirá o modal de conquistas aqui.
         });
+
+        atualizarEstadoBotoes(); // NOVO: Garante que o botão comece desabilitado
     }
     
     init();

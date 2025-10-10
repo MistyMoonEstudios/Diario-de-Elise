@@ -411,3 +411,26 @@ body {
     background-color: #fff;
     border-bottom: 1px solid #eee;
 }
+
+/* ESTILO PARA O BOTÃO DE VOLTAR PÁGINA */
+#prev-page-btn {
+    font-family: var(--diary-font);
+    font-size: 18px;
+    font-weight: bold;
+    background: none;
+    border: none;
+    color: var(--link-color);
+    cursor: pointer;
+    transition: color 0.3s;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+#prev-page-btn:hover {
+    color: var(--link-hover-color);
+}
+
+#prev-page-btn:disabled {
+    color: #a89f8d; /* Um cinza que combina com o rodapé */
+    cursor: not-allowed;
+}
