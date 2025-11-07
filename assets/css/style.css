@@ -1,28 +1,31 @@
 /* =================================
    1. CONFIGURAções GLOBAIS E TEMA
    ================================= */
-@import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Caveat:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Caveat:wght@400;700&family=Spectral+SC:wght@400;700&display=swap');
 
 :root {
     /* ...suas variáveis continuam aqui... */
-    --title-font: "Uncial Antiqua", cursive;
+    --title-font: "Spectral SC", serif; /* Fonte Elegante e Vintage */
     --diary-font: "Caveat", cursive;
     --standard-font: Arial, sans-serif;
     
-    --text-color: #3a2b23;
-    --link-color: #6a3d3d;
-    --link-hover-color: #8b0000;
-    --paper-color: #d8c9b3;
-    --cover-color: #2a2a2a;
-    --watermark-color: rgba(61, 43, 31, 0.08);
+    /* CORES ATUALIZADAS PARA ESTÉTICA MELANCÓLICA E TERROSA */
+    --text-color: #3e2e21; /* Marrom mais escuro para melhor contraste */
+    --link-color: #7b2434; /* Vinho Escuro */
+    --link-hover-color: #a2384a;
+    --paper-color: #dbc7a9; /* Tom mais queimado */
+    --cover-color: #201a18; /* Capa mais escura */
+    --watermark-color: rgba(62, 46, 33, 0.12); /* Marca d'água mais visível */
 
-    /* NOVAS CORES PARA AS FITAS */
-    --extras-color: #2e7d32;      /* Verde escuro */
-    --extras-hover-color: #43a047; /* Verde mais claro */
-    --notas-color: #c8922b;       /* Ocre/Dourado */
-    --notas-hover-color: #dca330;  /* Ocre mais claro */
-    --conquistas-color: #ad4c17;  /* Bronze/Laranja escuro */
-    --conquistas-hover-color: #bf571a; /* Bronze mais claro */
+    /* NOVAS CORES TERROSAS PARA AS FITAS */
+    --options-color: var(--link-color);
+    --options-hover-color: var(--link-hover-color);
+    --extras-color: #386641;      /* Verde Musgo */
+    --extras-hover-color: #4a8254; 
+    --notas-color: #a7884d;       /* Ocre/Dourado Envelhecido */
+    --notas-hover-color: #bf9e5c; 
+    --conquistas-color: #8c573f;  /* Marrom Avermelhado/Bronze */
+    --conquistas-hover-color: #a7694f;
 }
 
 * {
@@ -48,12 +51,23 @@ body {
 /* NOVO MÉTODO COM GRID */
 .game-container {
     display: grid;
-    /* Divide a tela em 3 colunas:
-       1fr (espaço esquerdo) | auto (diário) | 2fr (espaço direito) */
+    /* Divide a tela em 3 colunas: */
     grid-template-columns: 1fr auto 1.5fr;
     align-items: center;
     height: 100vh; /* Ocupa a altura total */
+    position: relative;
 }
+
+/* EFEITO VINHETA (Escurecimento nas bordas externas para criar profundidade) */
+.game-container::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    box-shadow: 0 0 150px 50px rgba(0,0,0,0.8) inset; /* Vinheta forte */
+    z-index: 20; 
+}
+
 
 #diary {
     /* Diz ao diário para ocupar a segunda coluna da grade */
@@ -67,9 +81,10 @@ body {
     border-radius: 8px;
     background-color: var(--cover-color);
     background-image: url('https://www.transparenttextures.com/patterns/large-leather.png');
-    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    box-shadow: 0 20px 70px rgba(0,0,0,0.8); /* Sombra mais intensa */
 }
 
+/* Mantém o efeito da lombada central */
 #diary::before {
     content: '';
     position: absolute;
@@ -80,10 +95,10 @@ body {
     transform: translateX(-50%);
     background: linear-gradient(to right,
         transparent 0%,
-        rgba(0,0,0,0.3) 15%,
+        rgba(0,0,0,0.4) 15%,
         transparent 25%,
         transparent 75%,
-        rgba(0,0,0,0.3) 85%,
+        rgba(0,0,0,0.4) 85%,
         transparent 100%);
     opacity: 0.8;
     z-index: 5;
@@ -94,7 +109,7 @@ body {
     display: flex;
     width: 100%;
     height: 100%;
-    box-shadow: inset 0 0 25px rgba(0,0,0,0.5);
+    box-shadow: inset 0 0 35px rgba(0,0,0,0.7); /* Sombra interna mais forte */
     z-index: 10;
 }
 
@@ -107,14 +122,16 @@ body {
     position: relative;
     display: flex;
     flex-direction: column;
-    padding: 2.5rem 3.5rem;
+    padding: 3.5rem 4.5rem; /* Aumento do padding/margem interna */
     background-color: var(--paper-color);
     background-image: url('https://www.transparenttextures.com/patterns/old-paper-2.png');
+    /* Sombra sutil nas bordas para efeito 3D */
+    box-shadow: 0 0 5px 2px rgba(0, 0, 0, 0.1); 
 }
 
 #left-page {
-    /* sombra interna para a página esquerda (lombada) */
-    box-shadow: inset -10px 0px 15px -10px rgba(0, 0, 0, 0.4);
+    /* sombra interna para a página esquerda (lombada) - Mais forte */
+    box-shadow: inset -15px 0px 30px -10px rgba(0, 0, 0, 0.7);
 }
 
 #right-page-container {
@@ -138,15 +155,50 @@ body {
     overflow-y: auto;
 }
 
+/* Capitular (Primeira letra ornamentada) */
+.content p:not(.no-cap):first-child::first-letter {
+    font-size: 3.5em; /* Tamanho maior */
+    font-family: var(--title-font);
+    float: left;
+    margin-right: 0.15em;
+    line-height: 0.8;
+    color: var(--link-color); /* Destaque com cor da Opção (Vinho) */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Separador Decorativo */
+.ornamental-separator {
+    border: none;
+    height: 1px;
+    background: var(--text-color);
+    background: linear-gradient(to right, transparent, var(--text-color) 40%, var(--text-color) 60%, transparent);
+    width: 50%;
+    margin: 2rem auto;
+    opacity: 0.4;
+    position: relative;
+}
+.ornamental-separator::before {
+    content: '✶'; /* Florão/Símbolo sutil */
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--text-color);
+    font-size: 1.2rem;
+    background-color: var(--paper-color); /* Fundo para 'quebrar' a linha */
+    padding: 0 10px;
+    opacity: 0.7;
+}
+
 #paginas-container h1 {
     font-family: var(--title-font);
     font-weight: normal;
-    font-size: 2.5rem;
+    font-size: 2.8rem; /* Tamanho ligeiramente maior */
     margin-bottom: 2rem;
     line-height: 1.1;
     text-align: left;
     padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(61, 43, 31, 0.2);
+    border-bottom: 1px solid rgba(61, 43, 31, 0.3); /* Linha divisória mais escura */
     color: var(--text-color);
 }
 
@@ -160,7 +212,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     font-family: var(--title-font);
-    font-size: 3rem;
+    font-size: 4rem; /* Marca d'água mais proeminente */
     white-space: nowrap;
     color: var(--watermark-color);
     z-index: 1;
@@ -170,17 +222,28 @@ body {
 .footer-left,
 .footer-right {
     position: absolute;
-    bottom: 2.5rem;
-    font-size: 1rem;
-    font-style: italic;
-    font-family: var(--standard-font);
-    color: #a89f8d;
+    bottom: 3.5rem; /* Mais para dentro */
+    font-size: 1.2rem;
+    font-style: normal; /* Remove itálico para a fonte manuscrita */
+    font-family: var(--diary-font); /* Fonte manuscrita para assinatura */
+    color: var(--text-color);
     z-index: 2;
+    line-height: 1.2;
 }
 
-.footer-left  { left: 3.5rem; }
-.footer-right { right: 3.5rem; }
+.footer-left  { left: 4.5rem; }
+.footer-right { right: 4.5rem; }
 
+/* Adiciona ornamento de assinatura acima de "Joinville, Santa Catarina" */
+.footer-right::before {
+    content: '✍';
+    display: block;
+    font-family: 'Times New Roman', serif;
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+    color: #555;
+    text-align: right;
+}
 
 /* =================================
    4. ANIMAÇÕES E FACES
@@ -208,15 +271,15 @@ body {
     top: 0; left: 0;
     width: 100%;
     height: 100%;
-    padding: 2.5rem 3.5rem;
+    padding: 3.5rem 4.5rem; /* Alinhado com o .page */
     display: flex;
     flex-direction: column;
     overflow: hidden;
     backface-visibility: hidden;
     background-color: var(--paper-color);
     background-image: url('https://www.transparenttextures.com/patterns/old-paper-2.png');
-    /* sombra interna para a página direita (lombada) */
-    box-shadow: inset 10px 0px 15px -10px rgba(0, 0, 0, 0.4);
+    /* sombra interna para a página direita (lombada) - Mais forte */
+    box-shadow: inset 15px 0px 30px -10px rgba(0, 0, 0, 0.7);
 }
 
 .face.verso {
@@ -244,7 +307,7 @@ body {
     margin-top: 1rem;
     padding-top: 1rem;
     flex-shrink: 0;
-    border-top: 1px solid rgba(61, 43, 31, 0.1);
+    border-top: 1px solid rgba(61, 43, 31, 0.2);
 }
 
 .choices button {
@@ -253,7 +316,7 @@ body {
     margin-bottom: 0.5rem;
     padding: 0.8rem 0;
     font-family: var(--diary-font);
-    font-size: 22px;
+    font-size: 24px; /* Ligeiramente maior */
     font-weight: bold;
     text-align: left;
     background: transparent;
@@ -276,17 +339,17 @@ body {
 
 .next-page-btn {
     font-family: var(--diary-font);
-    font-size: 18px;
+    font-size: 20px; /* Ligeiramente maior */
     font-weight: bold;
     background: none;
     border: none;
     color: var(--link-color);
     cursor: pointer;
-    transition: color 0.3s; /* Adicionado para a transição da cor ser suave */
+    transition: color 0.3s; 
 }
 
 .next-page-btn:hover {
-    color: var(--link-hover-color); /* Altera apenas a cor do texto ao passar o mouse */
+    color: var(--link-hover-color);
 }
 
 .hidden { display: none !important; }
@@ -295,7 +358,7 @@ body {
     position: relative; /* mantém como contexto */
 }
 
-/* ESTILO BASE PARA TODAS AS FITAS */
+/* ESTILO BASE PARA TODAS AS FITAS - APRIMORADO */
 .ribbon-btn {
     position: absolute;
     right: -4rem;
@@ -304,20 +367,30 @@ body {
     width: clamp(80px, 10vw, 110px);
     height: clamp(40px, 8vh, 50px);
     color: #fff;
-    font-family: var(--title-font);
+    font-family: var(--diary-font); /* Fonte manuscrita para as abas */
+    font-weight: 700;
     
-    /* MUDANÇA 1: Fonte mais adaptável e padding horizontal reduzido */
-    font-size: clamp(10px, 1.4vw, 15px);
-    padding: 0.5em 0.6em; /* Padding horizontal diminuído para dar mais espaço ao texto */
-
-    text-align: center;
+    /* MUDANÇA: Fonte maior e alinhamento para o ícone */
+    font-size: clamp(14px, 1.6vw, 18px);
     line-height: 1.2;
     cursor: pointer;
     clip-path: polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%);
     border-radius: 0 0 10px 0;
-    box-shadow: 0 15px 15px rgba(0,0,0,0.4);
-    border: 2px solid #3a2b23;
+    box-shadow: 0 15px 20px rgba(0,0,0,0.6); /* Sombra mais intensa */
+    border: 3px solid #3a2b23; /* Borda mais grossa */
     transition: transform 0.2s, background-color 0.3s;
+    
+    /* Alinhamento de conteúdo para incluir ícones */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-left: 0.8em; 
+}
+
+/* Estilo do Ícone na Fita */
+.ribbon-btn i {
+    margin-right: 0.5em;
+    font-size: 0.8em; /* Ícone um pouco menor que o texto */
 }
 
 /* ANIMAÇÃO DE HOVER PARA TODAS AS FITAS */
@@ -325,17 +398,17 @@ body {
     transform: translateX(5px);
 }
 
-/* MUDANÇA 2: Posição vertical ajustada para aproximar as fitas */
+/* CORES ESPECÍFICAS AGORA USANDO NOVAS VARIÁVEIS */
 #options-btn {
     top: 10%;
-    background-color: var(--link-color);
+    background-color: var(--options-color);
 }
 #options-btn:hover {
-    background-color: var(--link-hover-color);
+    background-color: var(--options-hover-color);
 }
 
 #extras-btn {
-    top: 19%; /* Mais próximo (antes era 25%) */
+    top: 19%;
     background-color: var(--extras-color);
 }
 #extras-btn:hover {
@@ -343,7 +416,7 @@ body {
 }
 
 #notas-btn {
-    top: 28%; /* Mais próximo (antes era 40%) */
+    top: 28%;
     background-color: var(--notas-color);
 }
 #notas-btn:hover {
@@ -353,7 +426,7 @@ body {
 #conquistas-btn {
     top: 37%;
     background-color: var(--conquistas-color);
-    font-size: clamp(12px, -1.2vw, 12px);
+    font-size: clamp(14px, 1.6vw, 18px); 
 }
 
 #conquistas-btn:hover {
@@ -410,27 +483,4 @@ body {
     padding: 0.8rem 0.5rem;
     background-color: #fff;
     border-bottom: 1px solid #eee;
-}
-
-/* ESTILO PARA O BOTÃO DE VOLTAR PÁGINA */
-#prev-page-btn {
-    font-family: var(--diary-font);
-    font-size: 18px;
-    font-weight: bold;
-    background: none;
-    border: none;
-    color: var(--link-color);
-    cursor: pointer;
-    transition: color 0.3s;
-    padding: 5px 10px;
-    border-radius: 4px;
-}
-
-#prev-page-btn:hover {
-    color: var(--link-hover-color);
-}
-
-#prev-page-btn:disabled {
-    color: #a89f8d; /* Um cinza que combina com o rodapé */
-    cursor: not-allowed;
 }
