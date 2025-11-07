@@ -1,13 +1,13 @@
 /* =================================
    1. CONFIGURAções GLOBAIS E TEMA
    ================================= */
-@import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Caveat:wght@400;700&family=Spectral+SC:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Caveat:wght@400;700&family=Spectral+SC:wght@400;700&family=EB+Garamond:wght@400;500;700&display=swap');
 
 :root {
     /* ...suas variáveis continuam aqui... */
     --title-font: "Spectral SC", serif; /* Fonte Elegante e Vintage */
     --diary-font: "Caveat", cursive;
-    --standard-font: Arial, sans-serif;
+    --standard-font: "EB Garamond", serif; /* Fonte Serifada Discreta para rodapés */
     
     /* CORES ATUALIZADAS PARA ESTÉTICA MELANCÓLICA E TERROSA */
     --text-color: #3e2e21; /* Marrom mais escuro para melhor contraste */
@@ -15,7 +15,7 @@
     --link-hover-color: #a2384a;
     --paper-color: #dbc7a9; /* Tom mais queimado */
     --cover-color: #201a18; /* Capa mais escura */
-    --watermark-color: rgba(62, 46, 33, 0.12); /* Marca d'água mais visível */
+    --watermark-color: rgba(62, 46, 33, 0.08); /* Marca d'água muito mais sutil */
 
     /* NOVAS CORES TERROSAS PARA AS FITAS */
     --options-color: var(--link-color);
@@ -212,7 +212,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     font-family: var(--title-font);
-    font-size: 4rem; /* Marca d'água mais proeminente */
+    font-size: 3rem; /* Tamanho reduzido para sutileza */
     white-space: nowrap;
     color: var(--watermark-color);
     z-index: 1;
@@ -223,34 +223,77 @@ body {
 .footer-right {
     position: absolute;
     bottom: 3.5rem; /* Mais para dentro */
-    font-size: 1.2rem;
-    font-style: normal; /* Remove itálico para a fonte manuscrita */
-    font-family: var(--diary-font); /* Fonte manuscrita para assinatura */
+    font-size: 1.1rem; /* Um pouco menor para ser discreto */
+    font-style: normal;
+    font-family: var(--standard-font); /* EB Garamond para elegância */
     color: var(--text-color);
+    opacity: 0.8;
     z-index: 2;
     line-height: 1.2;
 }
 
-.footer-left  { left: 4.5rem; }
-.footer-right { right: 4.5rem; }
+.footer-left  { 
+    left: 4.5rem; 
+    /* Estilo para o botão de retroceder */
+    cursor: pointer;
+    color: var(--link-color);
+    transition: color 0.3s;
+    /* Faz o botão sumir se não houver histórico */
+    visibility: hidden; 
+    opacity: 0.7;
+}
+.footer-left:hover {
+    color: var(--link-hover-color);
+    opacity: 1;
+}
 
-/* Adiciona ornamento de assinatura acima de "Joinville, Santa Catarina" */
+.footer-right { 
+    right: 4.5rem; 
+    font-family: var(--standard-font); /* Garante a fonte serifada aqui */
+}
+
+/* REMOÇÃO de ornamentos na localização */
 .footer-right::before {
-    content: '✍';
-    display: block;
-    font-family: 'Times New Roman', serif;
-    font-size: 1rem;
-    margin-bottom: 0.2rem;
-    color: #555;
-    text-align: right;
+    content: none;
 }
 
 /* =================================
    4. ANIMAÇÕES E FACES
    ================================= */
-@keyframes virarPaginaSolida {
-    from { transform: rotateY(0deg); }
-    to   { transform: rotateY(-180deg); }
+/* ANIMAÇÃO DE AVANÇO (Virar da Direita para a Esquerda) */
+@keyframes avancarPagina {
+    /* Início da Animação: Sombra da lombada direita (face frente) */
+    0% { 
+        transform: rotateY(0deg); 
+        box-shadow: inset 15px 0px 30px -10px rgba(0, 0, 0, 0.7); /* Sombra intensa da lombada original */
+    }
+    /* Meio: Página levantada, sombra de dobra suave e visível */
+    50% { 
+        box-shadow: -10px 10px 30px rgba(0,0,0,0.3), inset -5px 0 20px rgba(0,0,0,0.2); /* Sombra suave de dobra e sombra interna leve */
+    }
+    /* Fim: A face verso agora é a página de baixo, sem sombra na lombada */
+    100% { 
+        transform: rotateY(-180deg);
+        box-shadow: inset 15px 0px 30px -10px rgba(0, 0, 0, 0.0); /* Sombra se dissipa */
+    }
+}
+
+/* ANIMAÇÃO DE RETROCESSO (Virar da Esquerda para a Direita) */
+@keyframes retrocederPagina {
+    /* Início: Sombra se forma na ponta da página que retorna */
+    0% { 
+        transform: rotateY(-180deg); 
+        box-shadow: inset -10px 0 25px -10px rgba(0,0,0,0.4); 
+    }
+    /* Meio: Sombra de dobra suave e visível */
+    50% { 
+        box-shadow: 10px 10px 30px rgba(0,0,0,0.3), inset 5px 0 20px rgba(0,0,0,0.2); 
+    }
+    /* Fim: Retorna à posição original com a sombra da lombada direita */
+    100% { 
+        transform: rotateY(0deg); 
+        box-shadow: inset 15px 0px 30px -10px rgba(0, 0, 0, 0.7);
+    }
 }
 
 .pagina-direita-efeito {
@@ -261,6 +304,8 @@ body {
     transform-origin: left;
     transform-style: preserve-3d;
     will-change: transform;
+    /* A transição mais longa garante a dissolução suave da sombra da lombada */
+    transition: transform 1.2s ease-out; 
 }
 
 .pagina-topo  { z-index: 10; }
@@ -277,7 +322,8 @@ body {
     overflow: hidden;
     backface-visibility: hidden;
     background-color: var(--paper-color);
-    background-image: url('https://www.transparenttextures.com/patterns/old-paper-2.png');
+    /* Garante que a textura de papel esteja na face */
+    background-image: url('https://www.transparenttextures.com/patterns/old-paper-2.png'); 
     /* sombra interna para a página direita (lombada) - Mais forte */
     box-shadow: inset 15px 0px 30px -10px rgba(0, 0, 0, 0.7);
 }
@@ -293,11 +339,17 @@ body {
     position: absolute;
 }
 
-.virando {
-    animation: virarPaginaSolida 1.2s ease-out forwards;
-    /* sombra interna (inset) para efeito de profundidade */
-    box-shadow: inset -10px 0 25px -10px rgba(0,0,0,0.4);
+/* Classe de avanço: Direita para Esquerda */
+.avancando {
+    animation: avancarPagina 1.2s ease-out forwards;
 }
+
+/* Classe de retrocesso: Esquerda para Direita */
+.retrocedendo {
+    animation: retrocederPagina 1.2s ease-out forwards;
+}
+
+/* REMOVIDO: Classe .virando e @keyframes virarPaginaSolida (antigo) */
 
 
 /* =================================
