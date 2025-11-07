@@ -3,23 +3,60 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENTOS DO DOM ---
     const leftPage = document.getElementById('left-page');
     const rightPageContainer = document.getElementById('right-page-container');
-    let paginaTopo, paginaFundo;
-    let prevPageBtn; // NOVO: Referência para o botão de voltar
+    let paginaTopo, paginaFundo; // Páginas da direita que alternam
 
     // --- ESTADO DO JOGO ---
     let estadoAtual = { passagemId: 'prologo', subPagina: 0 };
     let isAnimating = false;
-    const historicoDeEstados = []; // NOVO: Array para guardar o histórico de navegação
+    
+    // --- GERENCIADOR DE ÁUDIO (Mecânica "show, play, hide" para áudio) ---
+    const soundManager = {
+        bgmAtual: null,
+        // ATENÇÃO: Estes são caminhos EXEMPIFICADOS. 
+        // Você deve criar e fornecer os arquivos de áudio em './assets/audio/'
+        caminhosAudio: {
+            virar_pagina: './assets/audio/page_flip.mp3', // SFX
+            chuva_leve: './assets/audio/rain.mp3',
+            silencio_rua: './assets/audio/city_ambience.mp3',
+            musica_calma: './assets/audio/calm_music.mp3',
+            relogio_tic_tac: './assets/audio/clock_tick.mp3',
+            passos_na_rua: './assets/audio/footsteps.mp3',
+            lamentos_cidade: './assets/audio/melancholy_city.mp3',
+            cafe_e_conversas: './assets/audio/cafe_chatter.mp3',
+            escritorio_movimentado: './assets/audio/office_busy.mp3',
+            suspense_sombrio: './assets/audio/dark_suspense.mp3',
+            clima_tenso: './assets/audio/tense_music.mp3',
+        },
 
-    /**
-     * NOVO: Atualiza o estado visual dos botões de navegação.
-     */
-    function atualizarEstadoBotoes() {
-        if (!prevPageBtn) {
-            prevPageBtn = document.getElementById('prev-page-btn');
+        playBGM: function(soundId) {
+            this.stopBGM(); // Para qualquer BGM anterior
+            const caminho = this.caminhosAudio[soundId];
+            if (caminho) {
+                this.bgmAtual = new Audio(caminho);
+                this.bgmAtual.loop = true;
+                this.bgmAtual.volume = 0.4; // Volume baixo para ambiente
+                // É necessário um 'catch' para evitar erros de promessa em alguns navegadores
+                this.bgmAtual.play().catch(e => console.log("Erro ao tentar tocar BGM: " + e));
+            }
+        },
+
+        stopBGM: function() {
+            if (this.bgmAtual) {
+                this.bgmAtual.pause();
+                this.bgmAtual.currentTime = 0;
+                this.bgmAtual = null;
+            }
+        },
+
+        playSFX: function(soundId) {
+            const caminho = this.caminhosAudio[soundId];
+            if (caminho) {
+                const sfx = new Audio(caminho);
+                sfx.volume = 0.8; // Volume normal para efeito
+                sfx.play().catch(e => console.log("Erro ao tentar tocar SFX: " + e));
+            }
         }
-        prevPageBtn.disabled = historicoDeEstados.length === 0;
-    }
+    };
 
     /**
      * Renderiza o conteúdo de um estado na página da direita.
@@ -40,14 +77,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const choicesDiv = pageElement.querySelector('.choices');
         const btnNext = pageElement.querySelector('.next-page-btn');
         
-        const paginas = passagem.texto.split('---');
+        // CORREÇÃO: agora divide o texto pelo novo separador HTML
+        const paginas = passagem.texto.split('<hr class=\'ornamental-separator\'>');
         const textoDaSubPagina = paginas[estado.subPagina].trim().replace(/\n/g, '<br>');
-        contentDiv.innerHTML = `<p>${textoDaSubPagina}</p>`;
+        
+        // Lógica para aplicar a classe 'no-cap' se não for a primeira subpágina
+        const classeCapitular = (estado.subPagina > 0) ? 'class="no-cap"' : '';
+        
+        contentDiv.innerHTML = `<p ${classeCapitular}>${textoDaSubPagina}</p>`;
         
         if (estado.subPagina < paginas.length - 1) {
+            // Se houver mais subpáginas, renderiza o botão de avançar.
             btnNext.classList.remove('hidden');
             choicesDiv.classList.add('hidden');
         } else {
+            // Se for a última subpágina, mostra as escolhas.
             btnNext.classList.add('hidden');
             choicesDiv.classList.remove('hidden');
             
@@ -74,39 +118,59 @@ document.addEventListener('DOMContentLoaded', () => {
         const faceVerso = paginaTopo.querySelector('.face.verso');
         if (faceVerso) {
             faceVerso.innerHTML = '';
+            // Clona a estrutura da página esquerda para manter a formatação.
             for (const node of leftPage.children) {
                 faceVerso.appendChild(node.cloneNode(true));
             }
+
+            // Encontra o título no clone...
             const tituloNoVerso = faceVerso.querySelector('.content h1');
+            // ...e o atualiza com o título da PRÓXIMA página.
             const tituloProximo = historia[proximoEstado.passagemId].titulo;
             if (tituloNoVerso) {
                 tituloNoVerso.textContent = tituloProximo;
             }
         }
+        
+        // Prepara a página de baixo com o conteúdo de texto da próxima página.
         renderizarPaginaDireita(paginaFundo, proximoEstado);
+    }
+    
+    /**
+     * Função para gerenciar o som ambiente (BGM)
+     */
+    function gerenciarSomAmbiente(passagemId) {
+        const proximoSom = historia[passagemId]?.som_ambiente;
+        const caminhoAtual = soundManager.bgmAtual ? soundManager.bgmAtual.src.split('/').pop().split('.')[0] : null;
+
+        // Se o som ambiente é diferente do atual, muda
+        if (proximoSom && proximoSom !== caminhoAtual) {
+            soundManager.playBGM(proximoSom);
+        } else if (!proximoSom && caminhoAtual) {
+            soundManager.stopBGM(); // Para se não houver mais som
+        }
     }
 
     /**
      * Inicia a transição animada.
-     * MODIFICADO: Adicionado parâmetro 'salvarNoHistorico'.
      */
-    function iniciarTransicao(proximoEstado, salvarNoHistorico = true) {
+    function iniciarTransicao(proximoEstado) {
         if (isAnimating) return;
         isAnimating = true;
 
-        if (salvarNoHistorico) {
-            historicoDeEstados.push({ ...estadoAtual });
-        }
+        // Toca o som de virar página (SFX)
+        soundManager.playSFX('virar_pagina'); 
 
         prepararTransicao(proximoEstado);
         
         const onAnimationEnd = () => {
+            // Atualiza o título esquerdo só depois da animação.
             leftPage.querySelector('.content').innerHTML = `<h1>${historia[proximoEstado.passagemId].titulo}</h1>`;
 
             const paginaAntiga = paginaTopo;
-            paginaAntiga.classList.remove('virando');
-            rightPageContainer.classList.remove('em-primeiro-plano');
+            paginaAntiga.classList.remove('virando', 'em-primeiro-plano');
             
+            // Troca os papéis das páginas.
             paginaAntiga.classList.remove('pagina-topo');
             paginaAntiga.classList.add('pagina-fundo');
             
@@ -117,7 +181,9 @@ document.addEventListener('DOMContentLoaded', () => {
             atualizarReferenciasDOM();
             estadoAtual = proximoEstado;
             isAnimating = false;
-            atualizarEstadoBotoes(); // NOVO: Atualiza estado do botão
+            
+            // Gerencia o som ambiente para a nova passagem
+            gerenciarSomAmbiente(estadoAtual.passagemId); 
         };
         
         rightPageContainer.classList.add('em-primeiro-plano');
@@ -133,7 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function virarPagina() {
         if (isAnimating) return;
-        const paginas = historia[estadoAtual.passagemId].texto.split('---');
+        // Divide o texto pelo separador HTML
+        const paginas = historia[estadoAtual.passagemId].texto.split('<hr class=\'ornamental-separator\'>');
         if (estadoAtual.subPagina < paginas.length - 1) {
             iniciarTransicao({ ...estadoAtual, subPagina: estadoAtual.subPagina + 1 });
         }
@@ -144,18 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (historia[destinoId]) {
             iniciarTransicao({ passagemId: destinoId, subPagina: 0 });
         }
-    }
-
-    /**
-     * NOVO: Função para voltar à página anterior.
-     */
-    function voltarPagina() {
-        if (isAnimating || historicoDeEstados.length === 0) {
-            return;
-        }
-        const estadoAnterior = historicoDeEstados.pop();
-        // O "false" impede que o ato de "voltar" seja salvo no histórico
-        iniciarTransicao(estadoAnterior, false);
     }
     
     // --- INICIALIZAÇÃO DO JOGO ---
@@ -168,23 +223,29 @@ document.addEventListener('DOMContentLoaded', () => {
         leftPage.querySelector('.content').innerHTML = `<h1>${historia[estadoAtual.passagemId].titulo}</h1>`;
         renderizarPaginaDireita(paginaTopo, estadoAtual);
         
+        // Inicia o som ambiente da primeira passagem
+        gerenciarSomAmbiente(estadoAtual.passagemId);
+        
         rightPageContainer.addEventListener('click', (event) => {
             if (event.target.classList.contains('next-page-btn')) {
                 virarPagina();
             }
         });
         
-        // NOVO: Adiciona listener para o botão de voltar
-        prevPageBtn = document.getElementById('prev-page-btn');
-        prevPageBtn.addEventListener('click', voltarPagina);
-        
         // Listeners do Modal
         const optionsBtn = document.getElementById('options-btn');
         const closeModalBtn = document.getElementById('close-modal-btn');
         const modalOverlay = document.getElementById('modal-overlay');
         const optionsModal = document.getElementById('options-modal');
-        function abrirMenu() { if (isAnimating) return; modalOverlay.classList.remove('hidden'); optionsModal.classList.remove('hidden'); }
-        function fecharMenu() { modalOverlay.classList.add('hidden'); optionsModal.classList.add('hidden'); }
+        function abrirMenu() { 
+             if (isAnimating) return; 
+             modalOverlay.classList.remove('hidden'); 
+             optionsModal.classList.remove('hidden'); 
+        }
+        function fecharMenu() { 
+            modalOverlay.classList.add('hidden'); 
+            optionsModal.classList.add('hidden'); 
+        }
         optionsBtn.addEventListener('click', abrirMenu);
         closeModalBtn?.addEventListener('click', fecharMenu);
         modalOverlay.addEventListener('click', fecharMenu);
@@ -195,18 +256,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const conquistasBtn = document.getElementById('conquistas-btn');
 
         extrasBtn.addEventListener('click', () => {
-            console.log("Botão Extras clicado!");
+            console.log("Botão Extras clicado! (Futuro Modal de Extras)");
         });
 
         notasBtn.addEventListener('click', () => {
-            console.log("Botão Notas clicado!");
+            console.log("Botão Notas clicado! (Futuro Modal de Notas)");
         });
 
         conquistasBtn.addEventListener('click', () => {
-            console.log("Botão Conquistas clicado!");
+            console.log("Botão Conquistas clicado! (Futuro Modal de Conquistas)");
         });
-
-        atualizarEstadoBotoes(); // NOVO: Garante que o botão comece desabilitado
     }
     
     init();
