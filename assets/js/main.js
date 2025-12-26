@@ -3,12 +3,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENTOS DO DOM ---
     const leftPage = document.getElementById('left-page');
     const rightPageContainer = document.getElementById('right-page-container');
-    const prevPageBtn = document.getElementById('prev-page-btn'); // NOVO: Botão de retrocesso
+    const prevPageWrapper = document.querySelector('.footer-left'); // Contêiner para gerenciar visibilidade
     let paginaTopo, paginaFundo; // Páginas da direita que alternam
+
+    // Variável para o elemento Button real do rodapé, inicializada em init()
+    let prevPageButtonElement; 
 
     // --- ESTADO DO JOGO ---
     let estadoAtual = { passagemId: 'prologo', subPagina: 0 };
-    let historico = []; // NOVO: Armazena estados anteriores para retrocesso
+    let historico = []; 
     let isAnimating = false;
 
     // --- GERENCIADOR DE ÁUDIO (Mecânica "show, play, hide" para áudio) ---
@@ -31,12 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         playBGM: function(soundId) {
-            this.stopBGM(); // Para qualquer BGM anterior
+            this.stopBGM(); 
             const caminho = this.caminhosAudio[soundId];
             if (caminho) {
                 this.bgmAtual = new Audio(caminho);
                 this.bgmAtual.loop = true;
-                this.bgmAtual.volume = 0.4; // Volume baixo para ambiente
+                this.bgmAtual.volume = 0.4; 
                 this.bgmAtual.play().catch(e => console.log("Erro ao tentar tocar BGM: " + e));
             }
         },
@@ -53,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const caminho = this.caminhosAudio[soundId];
             if (caminho) {
                 const sfx = new Audio(caminho);
-                sfx.volume = 0.8; // Volume normal para efeito
+                sfx.volume = 0.8; 
                 sfx.play().catch(e => console.log("Erro ao tentar tocar SFX: " + e));
             }
         }
@@ -71,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="face frente">
                 <div class="content"></div>
                 <div class="choices"></div>
-                <div class="page-flipper"><button class="next-page-btn hidden">Virar página &rarr;</button></div>
+                <div class="page-flipper"><button class="next-page-btn page-nav-btn hidden">Virar página &rarr;</button></div>
             </div>
             <div class="face verso"></div>`;
 
@@ -83,10 +86,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const paginas = passagem.texto.split('<hr class=\'ornamental-separator\'>');
         const textoDaSubPagina = paginas[estado.subPagina].trim().replace(/\n/g, '<br>');
         
-        // Lógica para aplicar a classe 'no-cap' se não for a primeira subpágina
-        const classeCapitular = (estado.subPagina > 0) ? 'class="no-cap"' : '';
-        
-        contentDiv.innerHTML = `<p ${classeCapitular}>${textoDaSubPagina}</p>`;
+        // Conteúdo do parágrafo
+        contentDiv.innerHTML = `<p>${textoDaSubPagina}</p>`;
         
         if (estado.subPagina < paginas.length - 1) {
             // Se houver mais subpáginas, renderiza o botão de avançar.
@@ -119,9 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {string} direcao 'avancar' ou 'retroceder'.
      */
     function prepararTransicao(proximoEstado, direcao) {
-        // A página que virá será a página 'topo'
         const faceVerso = paginaTopo.querySelector('.face.verso');
-
+        const tituloProximo = historia[proximoEstado.passagemId].titulo;
+        
         // Se estiver AVANÇANDO, o verso do 'topo' recebe o conteúdo da esquerda
         if (direcao === 'avancar' && faceVerso) {
             faceVerso.innerHTML = '';
@@ -132,14 +133,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Encontra o título no clone e o atualiza com o título da PRÓXIMA página.
             const tituloNoVerso = faceVerso.querySelector('.content h1');
-            const tituloProximo = historia[proximoEstado.passagemId].titulo;
             if (tituloNoVerso) {
                 tituloNoVerso.textContent = tituloProximo;
             }
         }
         
-        // A página de baixo (fundo) SEMPRE recebe o conteúdo da PRÓXIMA página
-        renderizarPaginaDireita(paginaFundo, proximoEstado);
+        // Renderiza o conteúdo de texto da próxima página SOMENTE se estiver AVANÇANDO.
+        if (direcao === 'avancar') {
+            renderizarPaginaDireita(paginaFundo, proximoEstado);
+        }
     }
     
     /**
@@ -167,15 +169,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         soundManager.playSFX('virar_pagina'); 
 
-        // Adiciona ou remove o estado atual do histórico ANTES da transição
+        // Adiciona o estado atual ao histórico ANTES da transição
         if (direcao === 'avancar') {
             historico.push(estadoAtual);
-        } else if (direcao === 'retroceder') {
-            // O estado já foi retirado em 'voltarPagina'
         }
-
-        prepararTransicao(proximoEstado, direcao);
         
+        prepararTransicao(proximoEstado, direcao); 
+
         const onAnimationEnd = () => {
             // Remove as classes de animação
             const animClasses = ['avancando', 'retrocedendo', 'em-primeiro-plano'];
@@ -183,9 +183,6 @@ document.addEventListener('DOMContentLoaded', () => {
             paginaTopo.classList.remove(...animClasses);
             rightPageContainer.classList.remove('em-primeiro-plano');
 
-            // Atualiza o título esquerdo
-            leftPage.querySelector('.content').innerHTML = `<h1>${historia[proximoEstado.passagemId].titulo}</h1>`;
-            
             // Troca os papéis das páginas (topo vira fundo, fundo vira topo)
             const paginaAntiga = paginaTopo;
             paginaAntiga.classList.remove('pagina-topo');
@@ -195,12 +192,26 @@ document.addEventListener('DOMContentLoaded', () => {
             paginaNova.classList.remove('pagina-fundo');
             paginaNova.classList.add('pagina-topo');
             
+            // Renderiza o destino na nova página visível APÓS o swap.
+            renderizarPaginaDireita(paginaNova, proximoEstado); 
+
+            // Atualiza o título esquerdo (CORRIGIDO: A atualização do título da página esquerda ocorre aqui)
+            leftPage.querySelector('.content').innerHTML = `<h1>${historia[proximoEstado.passagemId].titulo}</h1>`;
+
+
+            // Atualiza o estado e referências DOM
             atualizarReferenciasDOM();
             estadoAtual = proximoEstado;
             isAnimating = false;
             
-            // Gerencia a visibilidade do botão de retrocesso
-            prevPageBtn.style.visibility = historico.length > 0 ? 'visible' : 'hidden';
+            // Lógica final para esconder o botão Voltar (se necessário)
+            if (estadoAtual.passagemId === 'prologo' && estadoAtual.subPagina === 0) {
+                 historico = [];
+                 prevPageWrapper.style.visibility = 'hidden';
+            } else {
+                // Gerencia a visibilidade do botão de retrocesso
+                prevPageWrapper.style.visibility = historico.length > 0 ? 'visible' : 'hidden';
+            }
 
             // Garante que o botão de avançar na subpágina seja visível se necessário
             const btnNext = paginaTopo.querySelector('.next-page-btn');
@@ -250,8 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function fazerEscolha(destinoId) {
         if (isAnimating) return;
         if (historia[destinoId]) {
-            // NOTA: O histórico só deve ser limpo se for um "novo" capítulo,
-            // mas por simplificação da regra, mantemos como está.
             iniciarTransicao({ passagemId: destinoId, subPagina: 0 }, 'avancar');
         }
     }
@@ -265,20 +274,26 @@ document.addEventListener('DOMContentLoaded', () => {
         // Pega o estado anterior e o remove da pilha (pop)
         const estadoAnterior = historico.pop();
         
-        // 1. Inverte os papéis das páginas para preparar a animação de retrocesso (vira da esquerda para a direita)
+        // CORREÇÃO: Atualiza o título da página esquerda IMEDIATAMENTE (CORRIGE DELAY)
+        leftPage.querySelector('.content').innerHTML = `<h1>${historia[estadoAnterior.passagemId].titulo}</h1>`;
+        
+        // CORREÇÃO: Oculta o botão Voltar IMEDIATAMENTE se o destino for o Prólogo
+        if (estadoAnterior.passagemId === 'prologo' && estadoAnterior.subPagina === 0) {
+             prevPageWrapper.style.visibility = 'hidden';
+        }
+        
+        // 1. Inverte os papéis das páginas (topo vira fundo, fundo vira topo)
         paginaTopo.classList.remove('pagina-topo');
         paginaTopo.classList.add('pagina-fundo');
         
         paginaFundo.classList.remove('pagina-fundo');
         paginaFundo.classList.add('pagina-topo');
         
-        // 2. Atualiza as referências DOM
+        // 2. Atualiza as referências DOM para o novo 'paginaTopo' (que vai animar)
         atualizarReferenciasDOM();
         
         // 3. Inicia a transição no sentido 'retroceder'
         iniciarTransicao(estadoAnterior, 'retroceder');
-
-        // O estadoAtual será atualizado no `onAnimationEnd`.
     }
 
     // --- INICIALIZAÇÃO DO JOGO ---
@@ -288,11 +303,12 @@ document.addEventListener('DOMContentLoaded', () => {
             <div id="pagina-B" class="pagina-direita-efeito pagina-fundo"></div>`;
         atualizarReferenciasDOM();
         
+        // Define o título inicial da página esquerda
         leftPage.querySelector('.content').innerHTML = `<h1>${historia[estadoAtual.passagemId].titulo}</h1>`;
         renderizarPaginaDireita(paginaTopo, estadoAtual);
         
-        // O botão de retrocesso fica invisível no início do jogo
-        prevPageBtn.style.visibility = 'hidden'; 
+        // O contêiner do botão de retrocesso fica invisível no início do jogo
+        prevPageWrapper.style.visibility = 'hidden'; 
 
         // Inicia o som ambiente da primeira passagem
         gerenciarSomAmbiente(estadoAtual.passagemId);
@@ -304,8 +320,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Listener para RETROCEDER página
-        prevPageBtn.addEventListener('click', voltarPagina);
+        // Seleciona o botão de retrocesso real e anexa o listener
+        prevPageButtonElement = document.getElementById('prev-page-btn'); 
+        prevPageButtonElement.addEventListener('click', voltarPagina);
         
         // Listeners do Modal (mantidos)
         const optionsBtn = document.getElementById('options-btn');
@@ -313,13 +330,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const modalOverlay = document.getElementById('modal-overlay');
         const optionsModal = document.getElementById('options-modal');
         function abrirMenu() { 
-             if (isAnimating) return; 
-             modalOverlay.classList.remove('hidden'); 
-             optionsModal.classList.remove('hidden'); 
+             if (isAnimating) return;
+             modalOverlay.classList.remove('hidden');
+             optionsModal.classList.remove('hidden');
         }
         function fecharMenu() { 
-            modalOverlay.classList.add('hidden'); 
-            optionsModal.classList.add('hidden'); 
+            modalOverlay.classList.add('hidden');
+            optionsModal.classList.add('hidden');
         }
         optionsBtn.addEventListener('click', abrirMenu);
         closeModalBtn?.addEventListener('click', fecharMenu);

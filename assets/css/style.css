@@ -155,17 +155,6 @@ body {
     overflow-y: auto;
 }
 
-/* Capitular (Primeira letra ornamentada) */
-.content p:not(.no-cap):first-child::first-letter {
-    font-size: 3.5em; /* Tamanho maior */
-    font-family: var(--title-font);
-    float: left;
-    margin-right: 0.15em;
-    line-height: 0.8;
-    color: var(--link-color); /* Destaque com cor da Opção (Vinho) */
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
-}
-
 /* Separador Decorativo */
 .ornamental-separator {
     border: none;
@@ -219,42 +208,53 @@ body {
     pointer-events: none;
 }
 
+/* Estilo do Rodapé - Apenas posicionamento */
 .footer-left,
 .footer-right {
     position: absolute;
     bottom: 3.5rem; /* Mais para dentro */
-    font-size: 1.1rem; /* Um pouco menor para ser discreto */
-    font-style: normal;
-    font-family: var(--standard-font); /* EB Garamond para elegância */
-    color: var(--text-color);
-    opacity: 0.8;
     z-index: 2;
-    line-height: 1.2;
-}
-
-.footer-left  { 
-    left: 4.5rem; 
-    /* Estilo para o botão de retroceder */
-    cursor: pointer;
-    color: var(--link-color);
-    transition: color 0.3s;
-    /* Faz o botão sumir se não houver histórico */
-    visibility: hidden; 
-    opacity: 0.7;
-}
-.footer-left:hover {
-    color: var(--link-hover-color);
-    opacity: 1;
 }
 
 .footer-right { 
     right: 4.5rem; 
-    font-family: var(--standard-font); /* Garante a fonte serifada aqui */
+    font-family: var(--standard-font); /* EB Garamond para elegância */
+    font-size: 1.1rem;
+    color: var(--text-color);
+    opacity: 0.8;
 }
 
 /* REMOÇÃO de ornamentos na localização */
 .footer-right::before {
     content: none;
+}
+
+.footer-left { 
+    left: 4.5rem; 
+    /* Garante que o contêiner siga a visibilidade do botão */
+    visibility: hidden; 
+}
+
+/* NOVO: Estilo compartilhado para os botões de navegação (Virar/Voltar) */
+.page-nav-btn {
+    font-family: var(--standard-font); /* Fonte serifada para elegância */
+    font-size: 1.1rem; 
+    font-weight: 500;
+    background: none;
+    border: none;
+    color: var(--link-color);
+    cursor: pointer;
+    transition: color 0.3s; 
+    opacity: 0.7;
+    padding: 0;
+    margin: 0;
+    /* Faz o botão "Virar página" ficar alinhado à direita no seu contêiner */
+    float: right; 
+}
+
+.page-nav-btn:hover {
+    color: var(--link-hover-color);
+    opacity: 1;
 }
 
 /* =================================
@@ -265,11 +265,11 @@ body {
     /* Início da Animação: Sombra da lombada direita (face frente) */
     0% { 
         transform: rotateY(0deg); 
-        box-shadow: inset 15px 0px 30px -10px rgba(0, 0, 0, 0.7); /* Sombra intensa da lombada original */
+        box-shadow: inset 15px 0px 30px -10px rgba(0, 0, 0, 0.7); 
     }
     /* Meio: Página levantada, sombra de dobra suave e visível */
     50% { 
-        box-shadow: -10px 10px 30px rgba(0,0,0,0.3), inset -5px 0 20px rgba(0,0,0,0.2); /* Sombra suave de dobra e sombra interna leve */
+        box-shadow: -10px 10px 30px rgba(0,0,0,0.3), inset -5px 0 20px rgba(0,0,0,0.1); /* Sombra da dobra mais suave */
     }
     /* Fim: A face verso agora é a página de baixo, sem sombra na lombada */
     100% { 
@@ -287,7 +287,7 @@ body {
     }
     /* Meio: Sombra de dobra suave e visível */
     50% { 
-        box-shadow: 10px 10px 30px rgba(0,0,0,0.3), inset 5px 0 20px rgba(0,0,0,0.2); 
+        box-shadow: 10px 10px 30px rgba(0,0,0,0.3), inset 5px 0 20px rgba(0,0,0,0.1); /* Sombra da dobra mais suave */
     }
     /* Fim: Retorna à posição original com a sombra da lombada direita */
     100% { 
@@ -333,11 +333,38 @@ body {
     transform: rotateY(180deg);
 }
 
-.face.verso .watermark,
-.face.verso .footer-left,
-.face.verso .footer-right {
+/* **CORREÇÃO DE LAYOUT DURANTE A VIRADA (VERSO DA PÁGINA QUE VIRA)** */
+
+.face.verso .watermark {
+    /* CORRIGIDO: Marca d'água clonada DEVE ser visível no verso */
+    display: block !important; 
     position: absolute;
 }
+
+/* CORRIGIDO: Botão de retroceder (footer-left) no canto inferior ESQUERDO do verso. */
+.face.verso .footer-left {
+    position: absolute;
+    left: 4.5rem; /* Posição correta no verso (canto inferior esquerdo) */
+    right: auto; /* Desfaz o right: auto */
+    visibility: visible !important; /* Deve estar visível no verso da página animando, se houver histórico. */
+}
+.face.verso .footer-left .page-nav-btn {
+    float: none; /* Desfaz o float: right */
+}
+
+/* CORRIGIDO: Assinatura da cidade (footer-right) reativada no canto inferior DIREITO do verso. */
+.face.verso .footer-right {
+    position: absolute;
+    left: auto;
+    right: 4.5rem; /* Posição correta no verso (canto inferior direito) */
+    display: block; /* Reativa a exibição */
+}
+
+/* O contêiner de virar página (que tem o botão AVANÇAR) DEVE ser oculto no verso */
+.face.verso .page-flipper {
+    display: none;
+}
+
 
 /* Classe de avanço: Direita para Esquerda */
 .avancando {
@@ -348,9 +375,6 @@ body {
 .retrocedendo {
     animation: retrocederPagina 1.2s ease-out forwards;
 }
-
-/* REMOVIDO: Classe .virando e @keyframes virarPaginaSolida (antigo) */
-
 
 /* =================================
    5. ELEMENTOS DE INTERAÇÃO E MODAL
@@ -389,26 +413,7 @@ body {
     flex-shrink: 0;
 }
 
-.next-page-btn {
-    font-family: var(--diary-font);
-    font-size: 20px; /* Ligeiramente maior */
-    font-weight: bold;
-    background: none;
-    border: none;
-    color: var(--link-color);
-    cursor: pointer;
-    transition: color 0.3s; 
-}
-
-.next-page-btn:hover {
-    color: var(--link-hover-color);
-}
-
 .hidden { display: none !important; }
-
-#diary {
-    position: relative; /* mantém como contexto */
-}
 
 /* ESTILO BASE PARA TODAS AS FITAS - APRIMORADO */
 .ribbon-btn {
